@@ -1,0 +1,1 @@
+Because I Can't Calculus is a library to help those of us that can't do symbolic calculus in their heads.
