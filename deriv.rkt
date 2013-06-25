@@ -1,46 +1,31 @@
 #lang racket
 
-(require rackunit)
+(require rackunit "data.rkt")
 
-;; Because I Can't Calculus (BCIC)
+;; Symbolic Derivation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Some of people are masters of calculus. This library is not for those people.
+;; This module provides procedures for symbolic derivation of MathExpressions.
 
 (provide 
  (contract-out
   ;; Take the symbolic Derivative of the given Math-Expression
-  [deriv (-> math-expr? math-expr?)]
+  [deriv (-> math-expr? constant? math-expr?)]
   ;; Is the given value a Math-Expression?
   [math-expr? (-> any/c boolean?)]))
-
-;; Data Definition
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;; A Math-Expression is oneof:
-;; - Constant
-;; - Number
-;; - Unary Operation
-;; - Binary Operation
-;; - Function Application
-
-;; A Constant is a symbol that is not a member of UNARY-OPERATORS, 
-;; BINARY-OPERATORS, or FUNTIONS lists
-
-;; A Number is any valid number? in Racket
-
-;; A Unary Operation is a (list Unary-Operator Math-Expression)
-(define UNARY-OPERATORS '(-))
-
-;; A Binary Operation is a (list Binary-Operator Math-Expression Math-Expression)
-(define BINARY-OPERATORS '(+ - * /))
-
-;; A Function Application is a (list Function-Name Math-Expression)
-(define FUNCTIONS '(sin cos tan))
 
 ;; Main
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (deriv x) x)
+(define (deriv expr var)
+  (match expr
+    [(? constant? ex) (if (symbol=? expr var) 1 0)]
+    [(? number?) 0]
+    [(list (== '+) (? math-expr? a) (? math-expr? b)) (addition-rule a b var)]
+    [else (error "Unrecognized expression " expr ".")]))
+
+(define (addition-rule a b var)
+  `(+ ,(deriv a var) ,(deriv b var)))
+      
 
 ;; Predicates
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -49,28 +34,22 @@
   (or (constant? v)
       (number? v)
       (unary-expression? v)
-      (binary-expression? v)
-      (function-application? v)))
+      (binary-expression? v)))
 
 ;; Any -> Boolean
 ;; Is the given value a Unary-Expression?
 (define (unary-expression? v)
-  (expr-with-n-args-and-pred? v unary-operator? 2))
+  (expr-with-pred-and-n-args? v unary-operator? 2))
 
 ;; Any -> Boolean
 ;; Is the given value a Binary-Expression?
 (define (binary-expression? v)
-  (expr-with-n-args-and-pred? v binary-operator? 3))
-
-;; Any -> Boolean
-;; Is the given value a Function-Application?
-(define (function-application? v)
-  (expr-with-n-args-and-pred? v function-name? 2))
+  (expr-with-pred-and-n-args? v binary-operator? 3))
 
 ;; Any [Any -> Boolean] Integer -> Boolean
 ;; Does the given v have n arguments that are math expressions and its first 
 ;; expression satisifies the given predicate?
-(define (expr-with-n-args-and-pred? v pred n)
+(define (expr-with-pred-and-n-args? v pred n)
   (and (cons? v)
        (= (length v) n)
        (pred (first v))
@@ -82,8 +61,7 @@
 (define (constant? v) 
   (and (symbol? v)
        (not (unary-operator? v))
-       (not (binary-operator? v))
-       (not (function-name? v))))
+       (not (binary-operator? v))))
 
 ;; Any -> Boolean
 ;; Is the given value a Unary-Operator?
@@ -94,11 +72,6 @@
 ;; Is the given value a Binary-Operator?
 (define (binary-operator? v)
   (cons? (member v BINARY-OPERATORS)))
-
-;; Any -> Boolean
-;; Is the given value a Function-Name?
-(define (function-name? v)
-  (cons? (member v FUNCTIONS)))
 
 ;; Predicate Tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -114,35 +87,22 @@
   (check-true (constant? 'rho))
   (check-false (constant? (first BINARY-OPERATORS)))
   (check-false (constant? (first UNARY-OPERATORS)))
-  (check-false (constant? (first FUNCTIONS)))
   
   ;; unary-operator? tests
   (check-true (unary-operator? (first UNARY-OPERATORS)))
   (check-false (unary-operator? (third BINARY-OPERATORS)))
   (check-false (unary-operator? 'a))
-  (check-false (unary-operator? (first FUNCTIONS)))
   
   ;; binary-operator? tests
   (check-true (binary-operator? (third BINARY-OPERATORS)))
   (check-false (binary-operator? 'a))
-  (check-false (binary-operator? (first FUNCTIONS)))
-  
-  ;; function name tests
-  (check-true (function-name? (first FUNCTIONS)))
-  (check-false (function-name? 'a))
-  (check-false (function-name? (first BINARY-OPERATORS)))
   
   ;; unary-expression? tests
   (check-true (unary-expression? uexpr1))
   (check-false (unary-expression? bexpr1))
-  (check-false (unary-expression? fexpr1))
+  (check-true (unary-expression? fexpr1))
   
   ;; binary-expression? tests
   (check-false (binary-expression? uexpr1))
   (check-true (binary-expression? bexpr1))
-  (check-false (binary-expression? fexpr1))
-  
-  ;; function-application? tests
-  (check-false (function-application? uexpr1))
-  (check-false (function-application? bexpr1))
-  (check-true (function-application? fexpr1)))
+  (check-false (binary-expression? fexpr1)))
