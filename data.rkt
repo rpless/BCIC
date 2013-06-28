@@ -1,14 +1,13 @@
 #lang racket
 
-(require rackunit)
-
-(provide UNARY-OPERATORS BINARY-OPERATORS math-expr? constant?)
 ;; Because I Can't Calculus (BCIC)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Some of people are masters of calculus. This library is not for those people.
 
 ;; This module provides a data defintion for MathExpressions, which are a 
 ;; symbolic representation of mathematical expressions.
+
+(provide UNARY-OPERATORS BINARY-OPERATORS math-expr? constant?)
 
 ;; Data
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -31,8 +30,7 @@
 ;; A BinaryOperation is a (list Binary-Operator Math-Expression Math-Expression)
 
 ;; A BinaryOperator is any member of the BINARY-OPERATORS list.
-(define BINARY-OPERATORS '(+ - * /))
-
+(define BINARY-OPERATORS '(+ - * / ^))
 
 ;; Predicates
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -84,6 +82,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ test
+  (require rackunit)
+  
   (define uexpr1 '(- 1))
   (define bexpr1 '(+ 1 2))
   (define fexpr1 '(sin 1))
